@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "postfacto-3089"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "postfacto-3089"
+  template:
+    metadata:
+      labels:
+        app: "postfacto-3089"
+    spec:
+      containers:
+        - name: "postfacto-3089"
+          image: "postfactotestcr.azurecr.io/postfacto"
+          ports:
+          - containerPort: 3000
