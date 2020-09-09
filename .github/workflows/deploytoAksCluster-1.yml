@@ -1,0 +1,50 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: postfactotestcr.azurecr.io
+        username: ${{ secrets.acr_postfactotestcr_username }}
+        password: ${{ secrets.acr_postfactotestcr_password }}
+    
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/" -f  "Dockerfile" -t postfactotestcr.azurecr.io/posatfactotest:${{ github.sha }}
+        docker push postfactotestcr.azurecr.io/posatfactotest:${{ github.sha }}
+    
+    - uses: azure/k8s-set-context@v1
+      with:
+         kubeconfig: ${{ secrets.aks_posatfactotest_kubeConfig }}
+      id: login
+    
+    - name: Create namespace
+      run: |
+        namespacePresent=`kubectl get namespace | grep posatfactotest7548 | wc -l`
+        if [ $namespacePresent -eq 0 ]
+        then
+            echo `kubectl create namespace posatfactotest7548`
+        fi
+
+    - uses: azure/k8s-create-secret@v1
+      with:
+        namespace: posatfactotest7548
+        container-registry-url: postfactotestcr.azurecr.io
+        container-registry-username: ${{ secrets.acr_postfactotestcr_username }}
+        container-registry-password: ${{ secrets.acr_postfactotestcr_password }}
+        secret-name: posatfactotedockerauth
+       
+    - uses: azure/k8s-deploy@v1
+      with:
+        namespace: posatfactotest7548
+        manifests: |
+          manifests/deployment-1.yml
+          manifests/service-1.yml
+        images: |
+          postfactotestcr.azurecr.io/posatfactotest:${{ github.sha }}
+        imagepullsecrets: |
+          posatfactotedockerauth
