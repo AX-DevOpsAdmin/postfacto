@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "posatfactotest-7c01"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "posatfactotest-7c01"
+  template:
+    metadata:
+      labels:
+        app: "posatfactotest-7c01"
+    spec:
+      containers:
+        - name: "posatfactotest-7c01"
+          image: "postfactotestcr.azurecr.io/posatfactotest"
+          ports:
+          - containerPort: 3000
